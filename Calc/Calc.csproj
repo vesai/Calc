@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D2FDDFAF-B2CE-42FA-9309-1CE04D78EA0A}</ProjectGuid>
+    <ProjectGuid>{F2132874-E496-4B88-B805-B3B346E88D37}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Calc</RootNamespace>
@@ -41,34 +41,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DoubleCalc\Calc.cs" />
-    <Compile Include="DoubleCalc\DoubleParser.cs" />
-    <Compile Include="InfixCalc\Calc.cs" />
-    <Compile Include="InfixCalc\CantCalcException.cs" />
-    <Compile Include="InfixCalc\EOperationType.cs" />
-    <Compile Include="InfixCalc\IOperation.cs" />
-    <Compile Include="InfixCalc\Operations\BinaryOperation.cs" />
-    <Compile Include="InfixCalc\Operations\UnaryOperation.cs" />
-    <Compile Include="InfixCalc\Build.cs" />
-    <Compile Include="InfixCalc\CalcStack.cs" />
-    <Compile Include="InfixParser\Rules\OperatorRule.cs" />
-    <Compile Include="InfixParser\Rules\SpaceRule.cs" />
-    <Compile Include="InfixParser\Rules\WordsRule.cs" />
-    <Compile Include="InfixParser\Rules\ValueRule.cs" />
+    <Compile Include="Calc\CantCalcException.cs" />
+    <Compile Include="Calc\ICalcConstructor.cs" />
     <Compile Include="InfixParser\InfixParser.cs" />
-    <Compile Include="Parser\CantParseException.cs" />
-    <Compile Include="Parser\CharEnum.cs" />
-    <Compile Include="Parser\IParseRule.cs" />
-    <Compile Include="Parser\ParseDictionary.cs" />
-    <Compile Include="Parser\Parser.cs" />
+    <Compile Include="InfixParser\StateNode.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="InfixParser\EInfixStates.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
