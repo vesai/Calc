@@ -12,7 +12,7 @@ namespace Calc
     {
         private static Func<string, double> CreateCalc()
         {
-            return InfixCalc.InfixCalc<double>.Create()
+            return InfixCalc.Calc.StartCreate()
                 .AddOperation("+", a => a)
                 .AddOperation("-", a => -a)
                 .GoToLowPriorityGroup()
@@ -21,7 +21,7 @@ namespace Calc
                 .GoToLowPriorityGroup()
                 .AddOperation("+", (a,b) =>  a+b)
                 .AddOperation("-", (a,b) => a-b)
-                .GetCalculator();
+                .Create();
         }
 
         private static void Main(string[] args)
@@ -35,15 +35,18 @@ namespace Calc
             } while (string.IsNullOrWhiteSpace(inExpression));
             try
             {
-                Console.WriteLine(" Result: {0}", calc(inExpression));
+                Console.WriteLine("Результат: {0}", calc(inExpression));
             } catch(CantCalcException e)
             {
                 if (e.Position.HasValue)
                 {
-                    for (var i = 0; i < inExpression.Length+2; i++)
+                    for (var i = 0; i < e.Position.Value+1; i++)
                         Console.Write(' ');
+                    Console.WriteLine('^');
                 }
+                Console.WriteLine("Ошибка: {0}", e.Message);
             }
+            Console.ReadLine();
         }
     }
 }

@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calc", "Calc\Calc.csproj", "{F2132874-E496-4B88-B805-B3B346E88D37}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calc.Test", "Calc.Test\Calc.Test.csproj", "{C9994389-B108-451A-B0F6-5C687DF08176}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{F2132874-E496-4B88-B805-B3B346E88D37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2132874-E496-4B88-B805-B3B346E88D37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2132874-E496-4B88-B805-B3B346E88D37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9994389-B108-451A-B0F6-5C687DF08176}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9994389-B108-451A-B0F6-5C687DF08176}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9994389-B108-451A-B0F6-5C687DF08176}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9994389-B108-451A-B0F6-5C687DF08176}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

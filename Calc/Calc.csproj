@@ -43,7 +43,12 @@
   <ItemGroup>
     <Compile Include="Calc\CantCalcException.cs" />
     <Compile Include="Calc\ICalcConstructor.cs" />
-    <Compile Include="InfixParser\InfixParser.cs" />
+    <Compile Include="InfixCalc\Calc.cs" />
+    <Compile Include="InfixParser\Exceptions\CantParseException.cs" />
+    <Compile Include="InfixParser\Exceptions\ParserCreateException.cs" />
+    <Compile Include="InfixParser\Exceptions\StateException.cs" />
+    <Compile Include="InfixParser\IParserConstructor.cs" />
+    <Compile Include="InfixParser\Parser.cs" />
     <Compile Include="InfixParser\StateNode.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
