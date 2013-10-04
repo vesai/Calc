@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.Remoting.Messaging;
+using System.Linq;
 using System.Text;
 using Calc.InfixParser;
 using Calc.InfixParser.Exceptions;
@@ -11,108 +12,94 @@ namespace Calc.Test
     [TestClass]
     public class InfixParserTest
     {
-        private readonly StringBuilder sb = new StringBuilder();
-        private readonly Action<string> parseAction;
+        private readonly Func<string, IEnumerable<string>> parseAction;
 
         public InfixParserTest()
         {
-            parseAction = Parser.StartCreate()
-                .SetConstAction(val => sb.Append(val.ToString(CultureInfo.InvariantCulture) + "_"))
-                .AddOperation("+", () => sb.Append("+_"))
-                .AddOperation("+=", () => sb.Append("+=_"))
-                .AddOperation("=", () => sb.Append("=_"))
-                .AddOperation("sqrt", () => sb.Append("sqrt_"))
-                .AddOperation("sqr", () => sb.Append("sqr_"))
-                .AddUnaryOperation("+", () => sb.Append("+_"), false)
-                .AddUnaryOperation("-", () => sb.Append("-_"), false)
-                .AddUnaryOperation("!", () => sb.Append("!_"), true)
-                .AddUnaryOperation("x2", () => sb.Append("x2_"), false)
+            parseAction = Parser<string>.StartCreate()
+                .SetConstAction(val => val.ToString(CultureInfo.InvariantCulture) + "_")
+                .AddOperation("+", "+_")
+                .AddOperation("+=", "+=_")
+                .AddOperation("=", "=_")
+                .AddOperation("sqrt", "sqrt_")
+                .AddOperation("sqr", "sqr_")
+                .AddUnaryOperation("+", "+_", false)
+                .AddUnaryOperation("-",  "-_", false)
+                .AddUnaryOperation("!",  "!_", true)
+                .AddUnaryOperation("x2",  "x2_", false)
                 .Create();
+        }
+
+        private string Unite(IEnumerable<string> strings)
+        {
+            return strings.Aggregate(new StringBuilder(), 
+                (sb, s) => sb.Append(s), 
+                sb => sb.ToString());
         }
 
         [TestMethod]
         public void OnlyConst1()
         {
-            sb.Clear();
-            parseAction("2");
-            Assert.AreEqual("2_", sb.ToString());
+            Assert.AreEqual("2_", Unite(parseAction("2")));
         }
         [TestMethod]
         public void OnlyConst2()
         {
-            sb.Clear();
-            parseAction("2.1");
-            Assert.AreEqual("2.1_", sb.ToString());
+            Assert.AreEqual("2.1_", Unite(parseAction("2.1")));
         }
         [TestMethod]
         public void OnlyConst3()
         {
-            sb.Clear();
-            parseAction("2.1E+1");
-            Assert.AreEqual(2.1E+1.ToString(CultureInfo.InvariantCulture) + "_", sb.ToString());
+            Assert.AreEqual(2.1E+1.ToString(CultureInfo.InvariantCulture) + "_", Unite(parseAction("2.1E+1")));
         }
         [TestMethod]
         public void OnlyConst4()
         {
-            sb.Clear();
-            parseAction("2.1E1");
-            Assert.AreEqual(2.1E+1.ToString(CultureInfo.InvariantCulture) + "_", sb.ToString());
+            Assert.AreEqual(2.1E+1.ToString(CultureInfo.InvariantCulture) + "_", Unite(parseAction("2.1E1")));
         }
         [TestMethod]
         public void OnlyConst5()
         {
-            sb.Clear();
-            parseAction("2.1E-1");
-            Assert.AreEqual(2.1E-1.ToString(CultureInfo.InvariantCulture) + "_", sb.ToString());
+            Assert.AreEqual(2.1E-1.ToString(CultureInfo.InvariantCulture) + "_", Unite(parseAction("2.1E-1")));
         }
         [TestMethod]
         public void OnlyConst6()
         {
-            sb.Clear();
-            parseAction("2E3");
-            Assert.AreEqual(2E3.ToString(CultureInfo.InvariantCulture) + "_", sb.ToString());
+            Assert.AreEqual(2E3.ToString(CultureInfo.InvariantCulture) + "_", Unite(parseAction("2E3")));
         }
 
         [TestMethod]
         public void BinaryTest()
         {
-            sb.Clear();
-            parseAction("2+2");
-            Assert.AreEqual("2_+_2_", sb.ToString());
+            Assert.AreEqual("2_+_2_", Unite(parseAction("2+2")));
         }
 
         [TestMethod]
         public void Unary()
         {
-            sb.Clear();
-            parseAction("2+-+2!");
-            Assert.AreEqual("2_+_-_+_2_!_", sb.ToString());
+            Assert.AreEqual("2_+_-_+_2_!_", Unite(parseAction("2+-+2!")));
         }
 
         [TestMethod]
         public void Complex()
         {
-            sb.Clear();
-            parseAction("2+=2+2=2 sqrt+2 sqr+2+x2-3!");
-            Assert.AreEqual("2_+=_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_", sb.ToString());
+            Assert.AreEqual("2_+=_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_", 
+                Unite(parseAction("2+=2+2=2 sqrt+2 sqr+2+x2-3!")));
         }
 
         [TestMethod]
         public void ComplexWithSpaces()
         {
-            sb.Clear();
-            parseAction("2  +     2  +   2   =   2    sqrt  + 2   sqr  +    2  +  x2-  3    !");
-            Assert.AreEqual("2_+_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_", sb.ToString());
+            Assert.AreEqual("2_+_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_", 
+                Unite(parseAction("2  +     2  +   2   =   2    sqrt  + 2   sqr  +    2  +  x2-  3    !")));
         }
 
         [TestMethod]
         public void ExceptionLetterAfterConst()
         {
-            sb.Clear();
-
             try
             {
-                parseAction("2sqrt 2");
+                Unite(parseAction("2sqrt 2"));
             }
             catch (CantParseException e)
             {
@@ -130,11 +117,9 @@ namespace Calc.Test
         [TestMethod]
         public void ExceptionConstAfterLetter()
         {
-            sb.Clear();
-
             try
             {
-                parseAction("2 sqrt2");
+                Unite(parseAction("2 sqrt2"));
             } catch (CantParseException e)
             {
                 Assert.AreEqual(6, e.Position);
@@ -150,11 +135,9 @@ namespace Calc.Test
         [TestMethod]
         public void ExceptionBadOperator()
         {
-            sb.Clear();
-
             try
             {
-                parseAction("2 sqra 2");
+                Unite(parseAction("2 sqra 2"));
             } catch (CantParseException e)
             {
                 Assert.AreEqual(5, e.Position);
@@ -169,11 +152,9 @@ namespace Calc.Test
         [TestMethod]
         public void ExceptionShortOperator()
         {
-            sb.Clear();
-
             try
             {
-                parseAction("2 sq 2");
+                Unite(parseAction("2 sq 2"));
             } catch (CantParseException e)
             {
                 Assert.AreEqual(4, e.Position);
@@ -189,11 +170,9 @@ namespace Calc.Test
         [TestMethod]
         public void ExceptionIncorrectOperator()
         {
-            sb.Clear();
-
             try
             {
-                parseAction("2 sqr! 2");
+                Unite(parseAction("2 sqr! 2"));
             } catch (CantParseException e)
             {
                 Assert.AreEqual(5, e.Position);
@@ -209,11 +188,9 @@ namespace Calc.Test
         [TestMethod]
         public void ExceptionBadEndState()
         {
-            sb.Clear();
-
             try
             {
-                parseAction("2 sqrt 2 +");
+                Unite(parseAction("2 sqrt 2 +"));
             } catch (CantParseException e)
             {
                 Assert.AreEqual(9, e.Position);
@@ -233,16 +210,16 @@ namespace Calc.Test
         [TestMethod]
         public void NormalOperationsAdd()
         {
-            Parser.StartCreate()
-                .SetConstAction(val => { })
-                .AddOperation("+", () => { })
-                .AddOperation("+=", () => { })
-                .AddOperation("=", () => { })
-                .AddOperation("sqrt", () => { })
-                .AddUnaryOperation("+", () => { }, false)
-                .AddUnaryOperation("-", () => { }, false)
-                .AddUnaryOperation("!", () => { }, true)
-                .AddUnaryOperation("x2", () => { }, false)
+            Parser<string>.StartCreate()
+                .SetConstAction(val => null)
+                .AddOperation("+", null)
+                .AddOperation("+=", null)
+                .AddOperation("=", null)
+                .AddOperation("sqrt", null)
+                .AddUnaryOperation("+", null, false)
+                .AddUnaryOperation("-", null, false)
+                .AddUnaryOperation("!", null, true)
+                .AddUnaryOperation("x2", null, false)
                 .Create();
         }
 
@@ -252,11 +229,11 @@ namespace Calc.Test
         {
             try
             {
-                Parser.StartCreate()
-                    .SetConstAction(val => { })
-                    .AddOperation("sqrt ", () => { })
+                Parser<string>.StartCreate()
+                    .SetConstAction(val => null)
+                    .AddOperation("sqrt ", null)
                     .Create();
-            } catch (ParserCreateException e)
+            } catch (ParserCreateException)
             {
                 return;
             }
@@ -267,11 +244,11 @@ namespace Calc.Test
         {
             try
             {
-                Parser.StartCreate()
-                    .SetConstAction(val => { })
-                    .AddOperation(null, () => { })
+                Parser<string>.StartCreate()
+                    .SetConstAction(val => null)
+                    .AddOperation(null, null)
                     .Create();
-            } catch (ParserCreateException e)
+            } catch (ParserCreateException)
             {
                 return;
             }
@@ -282,11 +259,11 @@ namespace Calc.Test
         {
             try
             {
-                Parser.StartCreate()
-                    .SetConstAction(val => { })
-                    .AddOperation("12+", () => { })
+                Parser<string>.StartCreate()
+                    .SetConstAction(val => null)
+                    .AddOperation("12+", null)
                     .Create();
-            } catch (ParserCreateException e)
+            } catch (ParserCreateException)
             {
                 return;
             }
@@ -297,12 +274,12 @@ namespace Calc.Test
         {
             try
             {
-                Parser.StartCreate()
-                    .SetConstAction(val => { })
-                    .AddOperation("+a", () => { })
+                Parser<string>.StartCreate()
+                    .SetConstAction(val => null)
+                    .AddOperation("+a", null)
                     .Create();
             }
-            catch (ParserCreateException e)
+            catch (ParserCreateException)
             {
                 return;
             }
@@ -313,11 +290,11 @@ namespace Calc.Test
         {
             try
             {
-                Parser.StartCreate()
-                    .SetConstAction(val => { })
-                    .AddOperation("a+", () => { })
+                Parser<string>.StartCreate()
+                    .SetConstAction(val => null)
+                    .AddOperation("a+", null)
                     .Create();
-            } catch (ParserCreateException e)
+            } catch (ParserCreateException)
             {
                 return;
             }
@@ -329,12 +306,12 @@ namespace Calc.Test
         {
             try
             {
-                var p = Parser.StartCreate()
-                    .SetConstAction(val => { })
-                    .AddOperation("+", () => { });
+                var p = Parser<string>.StartCreate()
+                    .SetConstAction(val => null)
+                    .AddOperation("+", null);
                 p.Create();
-                p.AddOperation("+", () => { });
-            } catch (AggregateException e)
+                p.AddOperation("+", null);
+            } catch (AggregateException)
             {
                 return;
             }

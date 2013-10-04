@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -6,16 +7,18 @@ using Calc.InfixParser.Exceptions;
 
 namespace Calc.InfixParser
 {
-    public sealed class Parser : IParserConstructor
+    public sealed class Parser<TRes> : IParserConstructor<TRes>
     {
         private bool nowInitialize = true;
-        private Action<double> whenConstAction;
-        private readonly StateNode valueNode = new StateNode();
-        private readonly StateNode operationNode = new StateNode();
+        private Func<double, TRes> whenConstFunc;
+        private readonly StateNode<TRes> valueNode = new StateNode<TRes>();
+        private readonly StateNode<TRes> operationNode = new StateNode<TRes>();
 
-        public static IParserConstructor StartCreate()
+        /// <summary> Начать создание парсера </summary>
+        /// <returns> Объект для создания парсера </returns>
+        public static IParserConstructor<TRes> StartCreate()
         {
-            return new Parser();
+            return new Parser<TRes>();
         }
 
         private Parser()
@@ -24,9 +27,9 @@ namespace Calc.InfixParser
             AddSkipSpaces();
         }
 
-        private void ConstSend(string value)
+        private TRes ConstSend(string value)
         {
-            whenConstAction(double.Parse(value, CultureInfo.InvariantCulture));
+            return whenConstFunc(double.Parse(value, CultureInfo.InvariantCulture));
         }
 
         private void AddParseDouble()
@@ -58,18 +61,19 @@ namespace Calc.InfixParser
 
         private void AddSkipSpaces()
         {
-            valueNode.AddRule(' ').SetEndState(a => { }, valueNode);
-            operationNode.AddRule(' ').SetEndState(a => { }, operationNode);
+            valueNode.AddRule(' ').SetEndState(null, valueNode);
+            operationNode.AddRule(' ').SetEndState(null, operationNode);
         }
 
-        private void Parse(string str)
+        private IEnumerable<TRes> Parse(string str)
         {
             var currentNode = operationNode;
             var currentStr = new StringBuilder();
+            TRes res;
             for (var index = 0; index < str.Length; index++)
             {
                 var currentSymbol = str[index];
-                StateNode nextNode;
+                StateNode<TRes> nextNode;
                 try
                 {
                     nextNode = currentNode.Next(currentSymbol);
@@ -79,7 +83,8 @@ namespace Calc.InfixParser
                 }
                 if (nextNode == null)
                 {
-                    currentNode = currentNode.RunEndAction(currentStr.ToString());
+                    if (currentNode.RunEndAction(currentStr.ToString(), out res, out currentNode))
+                        yield return res;
                     if (currentNode == null)
                         throw new CantParseException("Неожиданный символ", index);
                     currentStr.Clear();
@@ -91,36 +96,38 @@ namespace Calc.InfixParser
                     currentNode = nextNode;
                 currentStr.Append(currentSymbol);
             }
-            if (currentNode.RunEndAction(currentStr.ToString()) != valueNode)
+            if (currentNode.RunEndAction(currentStr.ToString(), out res, out currentNode))
+                yield return res;
+            if (currentNode != valueNode)
                 throw new CantParseException("Неожиданный конец выражения", str.Length-1);
         }
         
         #region IParserConstructor
-        IParserConstructor IParserConstructor.AddOperation(string operation, Action whenOperation)
+        IParserConstructor<TRes> IParserConstructor<TRes>.AddOperation(string operation, TRes operationRes)
         {
             TestNowInit();
-            AddChainNodes(valueNode, operationNode, operation, whenOperation);
+            AddChainNodes(valueNode, operationNode, operation, operationRes);
             return this;
         }
 
-        IParserConstructor IParserConstructor.AddUnaryOperation(string operation, Action whenOperation, bool afterValueOperation)
+        IParserConstructor<TRes> IParserConstructor<TRes>.AddUnaryOperation(string operation, TRes operationRes, bool afterValueOperation)
         {
             TestNowInit();
             if (afterValueOperation)
-                AddChainNodes(valueNode, valueNode, operation, whenOperation);
+                AddChainNodes(valueNode, valueNode, operation, operationRes);
             else
-                AddChainNodes(operationNode, operationNode, operation, whenOperation);
+                AddChainNodes(operationNode, operationNode, operation, operationRes);
             return this;
         }
 
-        IParserConstructor IParserConstructor.SetConstAction(Action<double> action)
+        IParserConstructor<TRes> IParserConstructor<TRes>.SetConstAction(Func<double, TRes> func)
         {
             TestNowInit();
-            whenConstAction = action;
+            whenConstFunc = func;
             return this;
         }
 
-        Action<string> IParserConstructor.Create()
+        Func<string, IEnumerable<TRes>> IParserConstructor<TRes>.Create()
         {
             nowInitialize = false;
             return Parse;
@@ -156,13 +163,13 @@ namespace Calc.InfixParser
             return false;
         }
 
-        private static void AddChainNodes(StateNode fromNode, StateNode toNode, string chain, Action endAction)
+        private static void AddChainNodes(StateNode<TRes> fromNode, StateNode<TRes> toNode, string chain, TRes result)
         {
             var ident = TestIdentificator(chain);
             var lastState = chain.Aggregate(fromNode, (node, c) => node.AddRule(c));
             if (ident)
                 lastState.AddException(char.IsLetterOrDigit, "Невозможно распознать идентификатор");
-            lastState.SetEndState(c => endAction(), toNode);
+            lastState.SetEndState(c => result, toNode);
         }
     }
 }

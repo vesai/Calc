@@ -5,50 +5,52 @@ using Calc.InfixParser.Exceptions;
 
 namespace Calc.InfixParser
 {
-    internal sealed class StateNode
+    internal sealed class StateNode<TRes>
     {
-        private Action<string> endAction;
-        private StateNode endNextNode;
-        private readonly Dictionary<char, StateNode> charRules = new Dictionary<char, StateNode>();
-        private readonly List<Func<char, StateNode>> otherRules = new List<Func<char, StateNode>>();
+        private Func<string, TRes> endFunc;
+        private StateNode<TRes> endNextNode;
+        private readonly Dictionary<char, StateNode<TRes>> charRules = new Dictionary<char, StateNode<TRes>>();
+        private readonly List<Func<char, StateNode<TRes>>> otherRules = new List<Func<char, StateNode<TRes>>>();
 
-        public void SetEndState(Action<string> action, StateNode nextNode)
+        public void SetEndState(Func<string, TRes> func, StateNode<TRes> nextNode)
         {
-            endAction = action;
+            endFunc = func;
             endNextNode = nextNode;
         }
 
-        public StateNode RunEndAction(string str)
+        public bool RunEndAction(string str, out TRes result, out StateNode<TRes> nextNode)
         {
-            if (endAction == null)
-                return null;
-            endAction(str);
-            return endNextNode;
+            result = default(TRes);
+            nextNode = endNextNode;
+            if (endFunc == null)
+                return false;
+            result = endFunc(str);
+            return true;
         }
 
-        public StateNode AddRule(char symbol)
+        public StateNode<TRes> AddRule(char symbol)
         {
-            StateNode state;
+            StateNode<TRes> state;
             if (charRules.TryGetValue(symbol, out state))
                 return state;
-            state = new StateNode();
+            state = new StateNode<TRes>();
             charRules.Add(symbol, state);
             return state;
         }
 
-        public void AddRule(char symbol, StateNode nextNode)
+        public void AddRule(char symbol, StateNode<TRes> nextNode)
         {
             charRules.Add(symbol, nextNode);
         }
 
-        public void AddRule(Func<char, bool> condition, StateNode nextNode)
+        public void AddRule(Func<char, bool> condition, StateNode<TRes> nextNode)
         {
             otherRules.Add(c => condition(c) ? nextNode : null);
         }
 
-        public StateNode AddRule(Func<char, bool> condition)
+        public StateNode<TRes> AddRule(Func<char, bool> condition)
         {
-            var nextNode = new StateNode();
+            var nextNode = new StateNode<TRes>();
             AddRule(condition, nextNode);
             return nextNode;
         }
@@ -62,9 +64,9 @@ namespace Calc.InfixParser
             });
         }
 
-        public StateNode Next(char c)
+        public StateNode<TRes> Next(char c)
         {
-            StateNode state;
+            StateNode<TRes> state;
             if (charRules.TryGetValue(c, out state))
                 return state;
             return otherRules.Select(func => func(c)).FirstOrDefault(x => x != null);
