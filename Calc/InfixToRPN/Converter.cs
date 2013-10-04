@@ -1,44 +1,94 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Calc.InfixParser;
+using Calc.Exceptions.InfixToRpn;
+using Calc.Interfaces;
 
-namespace Calc.InfixToRPN
+namespace Calc.InfixToRpn
 {
-    class Converter : IConverterConstructor
+    public class Converter<TRes> : IConverterConstructor<TRes>
     {
-        private readonly IParserConstructor parserConstructor;
-        private readonly List<Action> parsedActions = new List<Action>(); 
+        public delegate void ConverterAction(List<TRes> items, ConverterStack<TRes> stack);
 
-        public static IConverterConstructor ConverterCreate(IParserConstructor parserConstructor)
-        {
-            return new Converter(parserConstructor);
-        }
+        private readonly IParserConstructor<ConverterAction> parserConstructor;
 
-        private Converter(IParserConstructor parserConstructor)
+        private Converter(IParserConstructor<ConverterAction> parserConstructor)
         {
             this.parserConstructor = parserConstructor;
+            parserConstructor.AddUnaryOperation("(",
+                (list, stack) => stack.AddOpenBracket());
+            parserConstructor.AddUnaryOperation(")",
+                (list, stack) => list.AddRange(stack.AddCloseBracket()), true);
+        }
+
+        public static IConverterConstructor<TRes> StartCreate(IParserConstructor<ConverterAction> parserConstructor)
+        {
+            return new Converter<TRes>(parserConstructor);
+        }
+
+        private static IEnumerable<TRes> Convert(string str, Func<string, IEnumerable<ConverterAction>> parser)
+        {
+            var stack = new ConverterStack<TRes>();
+            var list = new List<TRes>();
+            stack.AddOpenBracket();
+            foreach (ConverterAction action in parser(str))
+                action(list, stack);
+            list.AddRange(stack.AddCloseBracket());
+            stack.EndWork();
+            return list;
         }
 
         #region IConverterConstructor
-        IConverterConstructor IConverterConstructor.AddBinaryOperation(string operation, int priority, Action action, bool isRightAssociation)
+
+        IConverterConstructor<TRes> IConverterConstructor<TRes>.AddBinaryOperation(string operation, int priority,
+            TRes res, bool isRightAssociation)
         {
-            parserConstructor.AddOperation(operation, () => parsedActions.Add(action));
+            try
+            {
+                parserConstructor.AddOperation(operation,
+                    (items, stack) => items.AddRange(stack.AddBinaryOperation(res, priority, isRightAssociation)));
+            }
+            catch (Exception e)
+            {
+                throw new InitConverterException(e);
+            }
             return this;
         }
 
-        IConverterConstructor IConverterConstructor.AddUnaryOperation(string operation, int priority, Action action, bool afterValue)
+        IConverterConstructor<TRes> IConverterConstructor<TRes>.AddUnaryOperation(string operation, int priority,
+            TRes res, bool afterValue)
         {
-            parserConstructor.AddUnaryOperation(operation, () => parsedActions.Add(action), afterValue);
+            try
+            {
+                parserConstructor.AddUnaryOperation(operation,
+                    (items, stack) => stack.AddUnaryOperation(res, priority, afterValue), afterValue);
+            }
+            catch (Exception e)
+            {
+                throw new InitConverterException(e);
+            }
             return this;
         }
 
-        Func<string, IEnumerable<Action>> IConverterConstructor.Create()
+        IConverterConstructor<TRes> IConverterConstructor<TRes>.SetConstAction(Func<double, TRes> func)
         {
-            return 
+            try
+            {
+                parserConstructor.SetConstAction(val => ((items, stack) => items.Add(func(val))));
+            }
+            catch (Exception e)
+            {
+                throw new InitConverterException(e);
+            }
+
+            return this;
         }
-        #endregion 
+
+        Func<string, IEnumerable<TRes>> IConverterConstructor<TRes>.Create()
+        {
+            Func<string, IEnumerable<ConverterAction>> parser = parserConstructor.Create();
+            return str => Convert(str, parser);
+        }
+
+        #endregion
     }
 }

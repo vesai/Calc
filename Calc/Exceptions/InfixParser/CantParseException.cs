@@ -1,15 +1,15 @@
 ﻿using System;
 
-namespace Calc.InfixParser.Exceptions
+namespace Calc.Exceptions.InfixParser
 {
-    public class CantParseException : Exception
+    public sealed class CantParseException : Exception
     {
-        public int Position { private set; get; }
-
         public CantParseException(string errorText, int position)
             : base(errorText)
         {
             Position = position;
         }
+
+        public int Position { private set; get; }
     }
 }

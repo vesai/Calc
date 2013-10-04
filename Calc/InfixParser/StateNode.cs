@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calc.InfixParser.Exceptions;
 
 namespace Calc.InfixParser
 {
     internal sealed class StateNode<TRes>
     {
-        private Func<string, TRes> endFunc;
-        private StateNode<TRes> endNextNode;
         private readonly Dictionary<char, StateNode<TRes>> charRules = new Dictionary<char, StateNode<TRes>>();
         private readonly List<Func<char, StateNode<TRes>>> otherRules = new List<Func<char, StateNode<TRes>>>();
+        private Func<string, TRes> endFunc;
+        private StateNode<TRes> endNextNode;
 
         public void SetEndState(Func<string, TRes> func, StateNode<TRes> nextNode)
         {
@@ -57,7 +56,8 @@ namespace Calc.InfixParser
 
         public void AddException(Func<char, bool> condition, string message)
         {
-            otherRules.Add(c => { 
+            otherRules.Add(c =>
+            {
                 if (condition(c))
                     throw new StateException(message);
                 return null;

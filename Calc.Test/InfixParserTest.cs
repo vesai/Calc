@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Calc.Exceptions.InfixParser;
 using Calc.InfixParser;
-using Calc.InfixParser.Exceptions;
+using Calc.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Calc.Test
@@ -23,17 +24,17 @@ namespace Calc.Test
                 .AddOperation("=", "=_")
                 .AddOperation("sqrt", "sqrt_")
                 .AddOperation("sqr", "sqr_")
-                .AddUnaryOperation("+", "+_", false)
-                .AddUnaryOperation("-",  "-_", false)
-                .AddUnaryOperation("!",  "!_", true)
-                .AddUnaryOperation("x2",  "x2_", false)
+                .AddUnaryOperation("+", "+_")
+                .AddUnaryOperation("-", "-_")
+                .AddUnaryOperation("!", "!_", true)
+                .AddUnaryOperation("x2", "x2_")
                 .Create();
         }
 
         private string Unite(IEnumerable<string> strings)
         {
-            return strings.Aggregate(new StringBuilder(), 
-                (sb, s) => sb.Append(s), 
+            return strings.Aggregate(new StringBuilder(),
+                (sb, s) => sb.Append(s),
                 sb => sb.ToString());
         }
 
@@ -42,26 +43,31 @@ namespace Calc.Test
         {
             Assert.AreEqual("2_", Unite(parseAction("2")));
         }
+
         [TestMethod]
         public void OnlyConst2()
         {
             Assert.AreEqual("2.1_", Unite(parseAction("2.1")));
         }
+
         [TestMethod]
         public void OnlyConst3()
         {
             Assert.AreEqual(2.1E+1.ToString(CultureInfo.InvariantCulture) + "_", Unite(parseAction("2.1E+1")));
         }
+
         [TestMethod]
         public void OnlyConst4()
         {
             Assert.AreEqual(2.1E+1.ToString(CultureInfo.InvariantCulture) + "_", Unite(parseAction("2.1E1")));
         }
+
         [TestMethod]
         public void OnlyConst5()
         {
             Assert.AreEqual(2.1E-1.ToString(CultureInfo.InvariantCulture) + "_", Unite(parseAction("2.1E-1")));
         }
+
         [TestMethod]
         public void OnlyConst6()
         {
@@ -83,14 +89,14 @@ namespace Calc.Test
         [TestMethod]
         public void Complex()
         {
-            Assert.AreEqual("2_+=_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_", 
+            Assert.AreEqual("2_+=_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_",
                 Unite(parseAction("2+=2+2=2 sqrt+2 sqr+2+x2-3!")));
         }
 
         [TestMethod]
         public void ComplexWithSpaces()
         {
-            Assert.AreEqual("2_+_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_", 
+            Assert.AreEqual("2_+_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_",
                 Unite(parseAction("2  +     2  +   2   =   2    sqrt  + 2   sqr  +    2  +  x2-  3    !")));
         }
 
@@ -120,11 +126,13 @@ namespace Calc.Test
             try
             {
                 Unite(parseAction("2 sqrt2"));
-            } catch (CantParseException e)
+            }
+            catch (CantParseException e)
             {
                 Assert.AreEqual(6, e.Position);
                 return;
-            } catch
+            }
+            catch
             {
                 Assert.Fail("Неверный тип исключения");
             }
@@ -138,28 +146,33 @@ namespace Calc.Test
             try
             {
                 Unite(parseAction("2 sqra 2"));
-            } catch (CantParseException e)
+            }
+            catch (CantParseException e)
             {
                 Assert.AreEqual(5, e.Position);
                 return;
-            } catch
+            }
+            catch
             {
                 Assert.Fail("Неверный тип исключения");
             }
 
             Assert.Fail("Исключения не было");
         }
+
         [TestMethod]
         public void ExceptionShortOperator()
         {
             try
             {
                 Unite(parseAction("2 sq 2"));
-            } catch (CantParseException e)
+            }
+            catch (CantParseException e)
             {
                 Assert.AreEqual(4, e.Position);
                 return;
-            } catch
+            }
+            catch
             {
                 Assert.Fail("Неверный тип исключения");
             }
@@ -173,11 +186,13 @@ namespace Calc.Test
             try
             {
                 Unite(parseAction("2 sqr! 2"));
-            } catch (CantParseException e)
+            }
+            catch (CantParseException e)
             {
                 Assert.AreEqual(5, e.Position);
                 return;
-            } catch
+            }
+            catch
             {
                 Assert.Fail("Неверный тип исключения");
             }
@@ -191,11 +206,13 @@ namespace Calc.Test
             try
             {
                 Unite(parseAction("2 sqrt 2 +"));
-            } catch (CantParseException e)
+            }
+            catch (CantParseException e)
             {
                 Assert.AreEqual(9, e.Position);
                 return;
-            } catch
+            }
+            catch
             {
                 Assert.Fail("Неверный тип исключения");
             }
@@ -216,10 +233,10 @@ namespace Calc.Test
                 .AddOperation("+=", null)
                 .AddOperation("=", null)
                 .AddOperation("sqrt", null)
-                .AddUnaryOperation("+", null, false)
-                .AddUnaryOperation("-", null, false)
+                .AddUnaryOperation("+", null)
+                .AddUnaryOperation("-", null)
                 .AddUnaryOperation("!", null, true)
-                .AddUnaryOperation("x2", null, false)
+                .AddUnaryOperation("x2", null)
                 .Create();
         }
 
@@ -233,12 +250,14 @@ namespace Calc.Test
                     .SetConstAction(val => null)
                     .AddOperation("sqrt ", null)
                     .Create();
-            } catch (ParserCreateException)
+            }
+            catch (InitParserException)
             {
                 return;
             }
             Assert.Fail();
         }
+
         [TestMethod]
         public void IncorrectNull()
         {
@@ -248,12 +267,14 @@ namespace Calc.Test
                     .SetConstAction(val => null)
                     .AddOperation(null, null)
                     .Create();
-            } catch (ParserCreateException)
+            }
+            catch (InitParserException)
             {
                 return;
             }
             Assert.Fail();
         }
+
         [TestMethod]
         public void IncorrectBeginDigit()
         {
@@ -263,12 +284,14 @@ namespace Calc.Test
                     .SetConstAction(val => null)
                     .AddOperation("12+", null)
                     .Create();
-            } catch (ParserCreateException)
+            }
+            catch (InitParserException)
             {
                 return;
             }
             Assert.Fail();
         }
+
         [TestMethod]
         public void IncorrectSymbolOperation()
         {
@@ -279,12 +302,13 @@ namespace Calc.Test
                     .AddOperation("+a", null)
                     .Create();
             }
-            catch (ParserCreateException)
+            catch (InitParserException)
             {
                 return;
             }
             Assert.Fail();
         }
+
         [TestMethod]
         public void IncorrectLiteralOperation()
         {
@@ -294,7 +318,8 @@ namespace Calc.Test
                     .SetConstAction(val => null)
                     .AddOperation("a+", null)
                     .Create();
-            } catch (ParserCreateException)
+            }
+            catch (InitParserException)
             {
                 return;
             }
@@ -306,12 +331,30 @@ namespace Calc.Test
         {
             try
             {
-                var p = Parser<string>.StartCreate()
+                IParserConstructor<string> p = Parser<string>.StartCreate()
                     .SetConstAction(val => null)
                     .AddOperation("+", null);
                 p.Create();
                 p.AddOperation("+", null);
-            } catch (AggregateException)
+            }
+            catch (AggregateException)
+            {
+                return;
+            }
+            Assert.Fail();
+        }
+
+        [TestMethod]
+        public void TryCreateWithoutSetConstAction()
+        {
+            try
+            {
+                IParserConstructor<string> p = Parser<string>.StartCreate()
+                    .AddOperation("+", null);
+                p.Create();
+                p.AddOperation("+", null);
+            }
+            catch (AggregateException)
             {
                 return;
             }

@@ -41,23 +41,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Calc\CantCalcException.cs" />
-    <Compile Include="Calc\ICalcConstructor.cs" />
+    <Compile Include="Exceptions\InfixCalc\CantCalcException.cs" />
+    <Compile Include="Exceptions\InfixCalc\InitCalcException.cs" />
+    <Compile Include="Exceptions\InfixParser\CantParseException.cs" />
+    <Compile Include="Exceptions\InfixParser\InitParserException.cs" />
+    <Compile Include="Exceptions\InfixToRpn\InitConverterException.cs" />
+    <Compile Include="Exceptions\InfixToRpn\CantConvertException.cs" />
     <Compile Include="InfixCalc\Calc.cs" />
-    <Compile Include="InfixParser\Exceptions\CantParseException.cs" />
-    <Compile Include="InfixParser\Exceptions\ParserCreateException.cs" />
-    <Compile Include="InfixParser\Exceptions\StateException.cs" />
-    <Compile Include="InfixParser\IParserConstructor.cs" />
     <Compile Include="InfixParser\Parser.cs" />
+    <Compile Include="InfixParser\StateException.cs" />
     <Compile Include="InfixParser\StateNode.cs" />
+    <Compile Include="InfixToRpn\Converter.cs" />
+    <Compile Include="InfixToRpn\ConverterStack.cs" />
+    <Compile Include="Interfaces\ICalcConstructor.cs" />
+    <Compile Include="Interfaces\IConverterConstructor.cs" />
+    <Compile Include="Interfaces\IParserConstructor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RPN\ConvertFromInfix.cs" />
-    <Compile Include="RPN\RpnStack.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
