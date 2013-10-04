@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using Calc.InfixParser.Exceptions;
 
 namespace Calc.InfixParser
@@ -95,7 +92,7 @@ namespace Calc.InfixParser
                 currentStr.Append(currentSymbol);
             }
             if (currentNode.RunEndAction(currentStr.ToString()) != valueNode)
-                throw new CantParseException("Неожиданный конец выражения", str.Length-2);
+                throw new CantParseException("Неожиданный конец выражения", str.Length-1);
         }
         
         #region IParserConstructor
@@ -138,13 +135,16 @@ namespace Calc.InfixParser
 
         private static bool TestIdentificator(string str)
         {
+            if (string.IsNullOrWhiteSpace(str))
+                throw new ParserCreateException("Операция не может быть пустой или состоять их пробелов");
+            if (str.Any(c => c == ' '))
+                throw new ParserCreateException("Операция не может содержать пробелов");
+            if (char.IsDigit(str[0]))
+                throw new ParserCreateException("Невозможно добавить операцию, начинающуюся с цифры: \"" + str + "\"");
+
             var noIdExceptionText =
                 "Невозможно добавить операцию, должен быть либо идентификатор, либо набор символов: \"" + str + "\"";
 
-            if (string.IsNullOrWhiteSpace(str))
-                throw new ParserCreateException("Операция не может быть пустой или состоять их пробелов");
-            if (char.IsDigit(str[0]))
-                throw new ParserCreateException("Невозможно добавить операцию, начинающуюся с цифры: \"" + str + "\"");
             if (char.IsLetter(str[0]))
             {
                 if (str.All(char.IsLetterOrDigit))
@@ -158,8 +158,9 @@ namespace Calc.InfixParser
 
         private static void AddChainNodes(StateNode fromNode, StateNode toNode, string chain, Action endAction)
         {
+            var ident = TestIdentificator(chain);
             var lastState = chain.Aggregate(fromNode, (node, c) => node.AddRule(c));
-            if (TestIdentificator(chain))
+            if (ident)
                 lastState.AddException(char.IsLetterOrDigit, "Невозможно распознать идентификатор");
             lastState.SetEndState(c => endAction(), toNode);
         }

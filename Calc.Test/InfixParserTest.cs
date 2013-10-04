@@ -22,6 +22,7 @@ namespace Calc.Test
                 .AddOperation("+=", () => sb.Append("+=_"))
                 .AddOperation("=", () => sb.Append("=_"))
                 .AddOperation("sqrt", () => sb.Append("sqrt_"))
+                .AddOperation("sqr", () => sb.Append("sqr_"))
                 .AddUnaryOperation("+", () => sb.Append("+_"), false)
                 .AddUnaryOperation("-", () => sb.Append("-_"), false)
                 .AddUnaryOperation("!", () => sb.Append("!_"), true)
@@ -92,8 +93,16 @@ namespace Calc.Test
         public void Complex()
         {
             sb.Clear();
-            parseAction("2+=2+2=2 sqrt+2+x2-3!");
-            Assert.AreEqual("2_+=_2_+_2_=_2_sqrt_+_2_+_x2_-_3_!_", sb.ToString());
+            parseAction("2+=2+2=2 sqrt+2 sqr+2+x2-3!");
+            Assert.AreEqual("2_+=_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_", sb.ToString());
+        }
+
+        [TestMethod]
+        public void ComplexWithSpaces()
+        {
+            sb.Clear();
+            parseAction("2  +     2  +   2   =   2    sqrt  + 2   sqr  +    2  +  x2-  3    !");
+            Assert.AreEqual("2_+_2_+_2_=_2_sqrt_+_2_sqr_+_2_+_x2_-_3_!_", sb.ToString());
         }
 
         [TestMethod]
@@ -137,11 +146,199 @@ namespace Calc.Test
 
             Assert.Fail("Исключения не было");
         }
+
+        [TestMethod]
+        public void ExceptionBadOperator()
+        {
+            sb.Clear();
+
+            try
+            {
+                parseAction("2 sqra 2");
+            } catch (CantParseException e)
+            {
+                Assert.AreEqual(5, e.Position);
+                return;
+            } catch
+            {
+                Assert.Fail("Неверный тип исключения");
+            }
+
+            Assert.Fail("Исключения не было");
+        }
+        [TestMethod]
+        public void ExceptionShortOperator()
+        {
+            sb.Clear();
+
+            try
+            {
+                parseAction("2 sq 2");
+            } catch (CantParseException e)
+            {
+                Assert.AreEqual(4, e.Position);
+                return;
+            } catch
+            {
+                Assert.Fail("Неверный тип исключения");
+            }
+
+            Assert.Fail("Исключения не было");
+        }
+
+        [TestMethod]
+        public void ExceptionIncorrectOperator()
+        {
+            sb.Clear();
+
+            try
+            {
+                parseAction("2 sqr! 2");
+            } catch (CantParseException e)
+            {
+                Assert.AreEqual(5, e.Position);
+                return;
+            } catch
+            {
+                Assert.Fail("Неверный тип исключения");
+            }
+
+            Assert.Fail("Исключения не было");
+        }
+
+        [TestMethod]
+        public void ExceptionBadEndState()
+        {
+            sb.Clear();
+
+            try
+            {
+                parseAction("2 sqrt 2 +");
+            } catch (CantParseException e)
+            {
+                Assert.AreEqual(9, e.Position);
+                return;
+            } catch
+            {
+                Assert.Fail("Неверный тип исключения");
+            }
+
+            Assert.Fail("Исключения не было");
+        }
     }
 
     [TestClass]
     public class InfixParserCreateTest
     {
+        [TestMethod]
+        public void NormalOperationsAdd()
+        {
+            Parser.StartCreate()
+                .SetConstAction(val => { })
+                .AddOperation("+", () => { })
+                .AddOperation("+=", () => { })
+                .AddOperation("=", () => { })
+                .AddOperation("sqrt", () => { })
+                .AddUnaryOperation("+", () => { }, false)
+                .AddUnaryOperation("-", () => { }, false)
+                .AddUnaryOperation("!", () => { }, true)
+                .AddUnaryOperation("x2", () => { }, false)
+                .Create();
+        }
 
+
+        [TestMethod]
+        public void IncorrectHasSpace()
+        {
+            try
+            {
+                Parser.StartCreate()
+                    .SetConstAction(val => { })
+                    .AddOperation("sqrt ", () => { })
+                    .Create();
+            } catch (ParserCreateException e)
+            {
+                return;
+            }
+            Assert.Fail();
+        }
+        [TestMethod]
+        public void IncorrectNull()
+        {
+            try
+            {
+                Parser.StartCreate()
+                    .SetConstAction(val => { })
+                    .AddOperation(null, () => { })
+                    .Create();
+            } catch (ParserCreateException e)
+            {
+                return;
+            }
+            Assert.Fail();
+        }
+        [TestMethod]
+        public void IncorrectBeginDigit()
+        {
+            try
+            {
+                Parser.StartCreate()
+                    .SetConstAction(val => { })
+                    .AddOperation("12+", () => { })
+                    .Create();
+            } catch (ParserCreateException e)
+            {
+                return;
+            }
+            Assert.Fail();
+        }
+        [TestMethod]
+        public void IncorrectSymbolOperation()
+        {
+            try
+            {
+                Parser.StartCreate()
+                    .SetConstAction(val => { })
+                    .AddOperation("+a", () => { })
+                    .Create();
+            }
+            catch (ParserCreateException e)
+            {
+                return;
+            }
+            Assert.Fail();
+        }
+        [TestMethod]
+        public void IncorrectLiteralOperation()
+        {
+            try
+            {
+                Parser.StartCreate()
+                    .SetConstAction(val => { })
+                    .AddOperation("a+", () => { })
+                    .Create();
+            } catch (ParserCreateException e)
+            {
+                return;
+            }
+            Assert.Fail();
+        }
+
+        [TestMethod]
+        public void TryChangeAfterCreate()
+        {
+            try
+            {
+                var p = Parser.StartCreate()
+                    .SetConstAction(val => { })
+                    .AddOperation("+", () => { });
+                p.Create();
+                p.AddOperation("+", () => { });
+            } catch (AggregateException e)
+            {
+                return;
+            }
+            Assert.Fail();
+        }
     }
 }
