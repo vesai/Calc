@@ -3,7 +3,7 @@ using Calc.Exceptions.InfixToRpn;
 
 namespace Calc.InfixToRpn
 {
-    public class ConverterStack<TRes>
+    public sealed class ConverterStack<TRes>
     {
         private readonly Stack<NodeType> nodeStack = new Stack<NodeType>();
         private readonly Stack<int> priorityStack = new Stack<int>();

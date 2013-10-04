@@ -5,7 +5,7 @@ using Calc.Interfaces;
 
 namespace Calc.InfixToRpn
 {
-    public class Converter<TRes> : IConverterConstructor<TRes>
+    public sealed class Converter<TRes> : IConverterConstructor<TRes>
     {
         public delegate void ConverterAction(List<TRes> items, ConverterStack<TRes> stack);
 

@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Calc.Test
 {
     [TestClass]
-    public class InfixCalcTest
+    public sealed class InfixCalcTest
     {
         private readonly Func<string, double> process;
 

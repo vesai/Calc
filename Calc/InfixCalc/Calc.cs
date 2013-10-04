@@ -10,7 +10,7 @@ using Calc.Interfaces;
 namespace Calc.InfixCalc
 {
     /// <summary> Калькулятор </summary>
-    public class Calc : ICalcConstructor
+    public sealed class Calc : ICalcConstructor
     {
         private readonly IConverterConstructor<StackOperation> converter;
         private bool nowInitialize = true;

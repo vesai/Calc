@@ -12,7 +12,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Calc.Test
 {
     [TestClass]
-    public class InfixToRpnTest
+    public sealed class InfixToRpnTest
     {
         private readonly Func<string, IEnumerable<string>> converter;
 

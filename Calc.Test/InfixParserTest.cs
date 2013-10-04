@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Calc.Test
 {
     [TestClass]
-    public class InfixParserTest
+    public sealed class InfixParserTest
     {
         private readonly Func<string, IEnumerable<string>> parseAction;
 
